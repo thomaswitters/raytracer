@@ -168,11 +168,15 @@ namespace dae
 			for (size_t i = 0; i < positions.size(); ++i)
 			{
 				const Vector3& position = positions[i];
-				const Vector3& normal = normals[i];
 
 				// Transform the position using the final transformation matrix.
 				Vector3 transformedPosition = finalTransform.TransformPoint(position);
 				transformedPositions.push_back(transformedPosition);
+
+			}
+			for (size_t i = 0; i < normals.size(); ++i)
+			{
+				const Vector3& normal = normals[i];
 
 				// To transform a normal vector, apply only the rotation part of the matrix.
 				Vector3 transformedNormal = rotationTransform.TransformVector(normal).Normalized();
