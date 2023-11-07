@@ -23,6 +23,7 @@ namespace dae
 
 		void Render(Scene* pScene) const;
 		void RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Matrix cameraToWorld, const Vector3 cameraOrigin) const;
+		void RenderPixel(Scene* pScene, int px, int py, float fov, float aspectRatio, const Matrix cameraToWorld, const Vector3 cameraOrigin) const;
 
 
 		bool SaveBufferToImage() const;
