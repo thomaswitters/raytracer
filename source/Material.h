@@ -87,13 +87,7 @@ namespace dae
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
 			//todo: W3
-			//ColorRGB lambertianColor = BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor);
-			//ColorRGB phongColor = BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
-
-			//// Combine the Lambertian and Phong components
-			//ColorRGB result = lambertianColor + phongColor;
-
-			//return result;
+			
 
 			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor) 
 				+ BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
@@ -133,7 +127,7 @@ namespace dae
 				//float geometry = BRDF::GeometryFunction_SchlickGGX(hitRecord.normal, v, m_Roughness);
 				float geometry = BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness);
 
-				specularComponent += (fresnel * geometry * normalDistribution / 4 * (Vector3::Dot(v, hitRecord.normal) * (Vector3::Dot(l, hitRecord.normal))));
+				specularComponent += (fresnel * geometry * normalDistribution) / (4 * (Vector3::Dot(v, hitRecord.normal) * (Vector3::Dot(l, hitRecord.normal))));
 			}
 			else {
 				ColorRGB fresnel = BRDF::FresnelFunction_Schlick(hitRecord.normal, v, m_Albedo);
@@ -141,11 +135,11 @@ namespace dae
 				//float geometry = BRDF::GeometryFunction_SchlickGGX(hitRecord.normal, v, m_Roughness);
 				float geometry = BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness);
 
-				specularComponent += (fresnel * geometry * normalDistribution / 4 * (Vector3::Dot(v, hitRecord.normal) * (Vector3::Dot(l, hitRecord.normal))));
+				specularComponent += (fresnel * geometry * normalDistribution) / (4 * (Vector3::Dot(v, hitRecord.normal) * (Vector3::Dot(l, hitRecord.normal))));
 			}
 
 			if (m_Metalness < 0.5f) {
-				float LambertianFactor = 1.f / (2 * PI);
+				float LambertianFactor = 1.f / (PI);
 				diffuseComponent.r = m_Albedo.r * LambertianFactor;
 				diffuseComponent.g = m_Albedo.g * LambertianFactor;
 				diffuseComponent.b = m_Albedo.b * LambertianFactor;

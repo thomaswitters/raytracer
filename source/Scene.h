@@ -108,23 +108,7 @@ namespace dae
 		void Initialize() override;
 	};
 
-	class Scene_W4_TestScene final : public Scene
-	{
-	public:
-		Scene_W4_TestScene() = default;
-		~Scene_W4_TestScene() override = default;
-
-		Scene_W4_TestScene(const Scene_W1&) = delete;
-		Scene_W4_TestScene(Scene_W1&&) noexcept = delete;
-		Scene_W4_TestScene& operator=(const Scene_W1&) = delete;
-		Scene_W4_TestScene& operator=(Scene_W1&&) noexcept = delete;
-
-		void Initialize() override;
-		void Update(Timer* pTimer) override;
-
-	private:
-		TriangleMesh* pMesh{nullptr};
-	};
+	
 	
 	class Scene_W4_ReferenceScene final : public Scene
 	{
@@ -143,5 +127,23 @@ namespace dae
 	private:
 		TriangleMesh* m_Meshes[3]{};
 
+	};
+
+	class Scene_W4_TestScene final : public Scene
+	{
+	public:
+		Scene_W4_TestScene() = default;
+		~Scene_W4_TestScene() override = default;
+
+		Scene_W4_TestScene(const Scene_W1&) = delete;
+		Scene_W4_TestScene(Scene_W1&&) noexcept = delete;
+		Scene_W4_TestScene& operator=(const Scene_W1&) = delete;
+		Scene_W4_TestScene& operator=(Scene_W1&&) noexcept = delete;
+
+		void Initialize() override;
+		void Update(Timer* pTimer) override;
+
+	private:
+		TriangleMesh* pMesh{ nullptr };
 	};
 }

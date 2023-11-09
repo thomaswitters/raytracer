@@ -84,6 +84,12 @@ namespace dae
 		Matrix translationTransform{};
 		Matrix scaleTransform{};
 
+		Vector3 minAABB;
+		Vector3 maxAABB;
+
+		Vector3 transformedMinAABB;
+		Vector3 transformedMaxAABB;
+
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
 
@@ -116,7 +122,7 @@ namespace dae
 
 			normals.push_back(triangle.normal);
 
-			//Not ideal, but making sure all vertices are updated
+			
 			if(!ignoreTransformUpdate)
 				UpdateTransforms();
 		}
@@ -127,53 +133,78 @@ namespace dae
 			normals.clear();
 			normals.reserve(positions.size());
 
-			// Calculate normals for each triangle in the mesh.
+			
 			for (size_t i = 0; i < indices.size(); i += 3)
 			{
-				// Get the indices of the vertices for the current triangle.
+				
 				int index0 = indices[i];
 				int index1 = indices[i + 1];
 				int index2 = indices[i + 2];
 
-				// Calculate the normal for the current triangle using the cross product of its edges.
+				
 				Vector3 edge1 = positions[index1] - positions[index0];
 				Vector3 edge2 = positions[index2] - positions[index0];
 				Vector3 normal = Vector3::Cross(edge1, edge2);
 
-				// Add the calculated normal to the normals array for each vertex of the triangle.
+				
 				normals.push_back(normal);
 				normals.push_back(normal);
 				normals.push_back(normal);
 			}
 
-			// Normalize the normals in a separate loop.
 			for (size_t i = 0; i < normals.size(); ++i)
 			{
 				normals[i].Normalize();
 			}
 		}
 
+		void UpdateAABB()
+		{
+			if (positions.size() > 0)
+			{
+				minAABB = positions[0];
+				maxAABB = positions[0];
+
+				for (auto& p : positions)
+				{
+					minAABB = Vector3::Min(p, minAABB);
+					maxAABB = Vector3::Max(p, maxAABB);
+				}
+			}
+		}
+
+
 		void UpdateTransforms()
 		{
-			 // Calculate the final transformation matrix.
+			
 			Matrix finalTransform = scaleTransform * rotationTransform * translationTransform;
 
-			// Clear the transformed positions and normals and preallocate memory for them.
+			
 			transformedPositions.clear();
 			transformedPositions.reserve(positions.size());
 			transformedNormals.clear();
 			transformedNormals.reserve(normals.size());
 
-			// Transform each vertex and normal using the final transformation matrix.
-			for (size_t i = 0; i < positions.size(); ++i)
+			
+			for (auto& p : positions)
 			{
-				const Vector3& position = positions[i];
-
-				// Transform the position using the final transformation matrix.
-				Vector3 transformedPosition = finalTransform.TransformPoint(position);
-				transformedPositions.push_back(transformedPosition);
-
+				transformedPositions.emplace_back(finalTransform.TransformPoint(p));
 			}
+
+			/*for (auto& p : normals)
+			{
+				transformedNormals.emplace_back(finalTransform.TransformPoint(p));
+			}*/
+
+			//for (size_t i = 0; i < positions.size(); ++i)
+			//{
+			//	const Vector3& position = positions[i];
+
+			//	// Transform the position using the final transformation matrix.
+			//	Vector3 transformedPosition = finalTransform.TransformPoint(position);
+			//	transformedPositions.push_back(transformedPosition);
+
+			//}
 			for (size_t i = 0; i < normals.size(); ++i)
 			{
 				const Vector3& normal = normals[i];
@@ -182,40 +213,50 @@ namespace dae
 				Vector3 transformedNormal = rotationTransform.TransformVector(normal).Normalized();
 				transformedNormals.push_back(transformedNormal);
 			}
+
+			UpdateTransformedAABB(finalTransform);
 			
 		}
-	};
-	//// Clear any existing normals
-	//normals.clear();
-	//normals.resize(positions.size(), Vector3(0.0f, 0.0f, 0.0f));
 
-	//for (size_t i = 0; i < indices.size(); i += 3) {
-	//	int idx0 = indices[i];
-	//	int idx1 = indices[i + 1];
-	//	int idx2 = indices[i + 2];
+		void UpdateTransformedAABB(const Matrix& FinalTransform)
+		{
+			Vector3 tMinAABB = FinalTransform.TransformPoint(minAABB);
+			Vector3 tMaxAABB = tMinAABB;
 
-	//	// Get vertex positions
-	//	Vector3 A = positions[idx0];
-	//	Vector3 B = positions[idx1];
-	//	Vector3 C = positions[idx2];
+			Vector3 tAABB = FinalTransform.TransformPoint(maxAABB.x, minAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
 
-	//	// Calculate the triangle normal
-	//	Vector3 AB = B - A;
-	//	Vector3 AC = C - A;
-	//	Vector3 crossABC = Vector3::Cross(AB, AC);
-	//	crossABC.Normalize();
-	//	Vector3 N = crossABC;
+			tAABB = FinalTransform.TransformPoint(maxAABB.x, minAABB.y, maxAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
 
-	//	// Accumulate the normals for each vertex of the triangle
-	//	normals[idx0] += N;
-	//	normals[idx1] += N;
-	//	normals[idx2] += N;
-	//}
+			tAABB = FinalTransform.TransformPoint(minAABB.x, minAABB.y, maxAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
 
-	//// Normalize all normals
-	//for (size_t i = 0; i < normals.size(); ++i) {
-	//	normals[i] = normals[i].Normalized();
-	//}
+			tAABB = FinalTransform.TransformPoint(minAABB.x, maxAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = FinalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = FinalTransform.TransformPoint(maxAABB);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = FinalTransform.TransformPoint(minAABB.x, maxAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			transformedMinAABB = tMinAABB;
+			transformedMaxAABB = tMaxAABB;
+		}
+
+		
+	}; 
 #pragma endregion
 #pragma region LIGHT
 	enum class LightType

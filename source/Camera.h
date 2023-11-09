@@ -118,6 +118,10 @@ namespace dae
 				totalYaw += float(mouseX) * deltaTime;
 				
 			}
+			if ((mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) && (mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT)))
+			{
+				origin -= up * float(mouseY) * deltaTime * 2.f;
+			}
 		}
 	};
 }

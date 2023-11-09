@@ -24,6 +24,8 @@ namespace dae
 			// b^2 - 4ac
 			float discriminant = b * b - 4 * a * c;
 
+			//bool didhit = false;
+
 			//float sq = sqrt(max_align_t(discriminant));
 			if (discriminant > 0.f)
 			{
@@ -34,7 +36,6 @@ namespace dae
 
 				if (t1 >= ray.min && t1 < ray.max && t1 < hitRecord.t)
 				{
-					//Vector3 p = ray.origin + ((-b - sqrt(discriminant) / 2 * a) * ray.direction);
 					hitRecord.t = t1;
 					hitRecord.origin = ray.origin + ray.direction * t1;
 
@@ -46,8 +47,10 @@ namespace dae
 					hitRecord.materialIndex = sphere.materialIndex;
 
 					return true;
+					
 				}
-				if (t2 >= ray.min && t2 < ray.max && t2 < hitRecord.t)
+				
+				else if (t2 >= ray.min && t2 < ray.max && t2 < hitRecord.t)
 				{
 					hitRecord.t = t2;
 
@@ -60,10 +63,12 @@ namespace dae
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
 					return true;
+
 				}
-				return true;
+			
 			}
 
+			
 			return false;
 			
 		}
@@ -86,16 +91,20 @@ namespace dae
 			float a = Vector3::Dot(origin, plane.normal);
 			float b = Vector3::Dot(ray.direction, plane.normal);
 
+
+
 			//float t = ray.origin + (a / b) * ray.direction;
 			float t = (a / b);
+			
+			
 
 			if (t >= ray.min && t < ray.max && t < hitRecord.t)
 			{
-				hitRecord.t = t;
 				
+
+				hitRecord.t = t;
 				hitRecord.origin = ray.origin + ray.direction * t;
 				hitRecord.normal = plane.normal;
-
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = plane.materialIndex;
 
@@ -167,20 +176,47 @@ namespace dae
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
 		{
 			HitRecord temp{};
+
 			return HitTest_Triangle(triangle, ray, temp, true);
 		}
 #pragma endregion
 #pragma region TriangeMesh HitTest
+
+		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		{
+			float tx1 = (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x;
+			float tx2 = (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x;
+
+
+			float tmin = std::min(tx1, tx2);
+			float tmax = std::max(tx1, tx2);
+
+			float ty1 = (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y;
+			float ty2 = (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y;
+
+			tmin = std::max(tmin, std::min(ty1, ty2));
+			tmax = std::min(tmax, std::max(ty1, ty2));
+
+			float tz1 = (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z;
+			float tz2 = (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z;
+
+			tmin = std::max(tmin, std::min(tz1, tz2));
+			tmax = std::min(tmax, std::max(tz1, tz2));
+
+			return tmax > 0 && tmax >= tmin;
+		}
+
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//Implement the HitTest_TriangleMesh function(+make sure to alter the Scene::GetClosestHit & DoesHit
-			//functions)
-			//• Each set of 3 indices represents a Triangle – use HitTest_Triangle to find the triangle of the TriangleMesh with the(!) closest hit
-			//• Use the ‘transformedPositions’ & ‘transformedNormals’ to define each individual triangle!
-			//bool didHit = false;
+			//float closestT = hitRecord.t;
+			bool didhit = false;
+			
 
-			float closestT = FLT_MAX;
-			bool didHit = false;
+			if (!SlabTest_TriangleMesh(mesh, ray))
+			{
+				return false;
+			}
+			
 
 			for (size_t i = 0; i < mesh.indices.size(); i += 3)
 			{
@@ -198,20 +234,16 @@ namespace dae
 
 				if (HitTest_Triangle(triangle, ray, hitRecord))
 				{
-					if (hitRecord.t < closestT)
-					{
-						closestT = hitRecord.t;
-						if (!ignoreHitRecord || !hitRecord.didHit)
-						{
-							hitRecord.didHit = true;
-							hitRecord.materialIndex = mesh.materialIndex;
-						}
-						didHit = true;
-					}
+					
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = mesh.materialIndex;
+					didhit = true;
+					//return true;
 				}
 			}
 
-			return didHit;
+			return didhit;
+			//return false;
 			
 		}
 
@@ -220,6 +252,8 @@ namespace dae
 			HitRecord temp{};
 			return HitTest_TriangleMesh(mesh, ray, temp, true);
 		}
+
+		
 #pragma endregion
 	}
 
@@ -259,8 +293,9 @@ namespace dae
 				
 				if (cosTheta > 0)
 				{
-					float intensity = (2 * PI * light.intensity) /  (PI * lightDistance * lightDistance);
+					float intensity =  float(4 * light.intensity / (M_PI * lightDistance * lightDistance));
 					ColorRGB radiance = light.color * cosTheta * intensity;
+
 					return radiance;
 					
 				}
@@ -273,17 +308,14 @@ namespace dae
 				float cosTheta = Vector3::Dot(lightDirection, lightDirection);
 				if (cosTheta > 0) 
 				{
-					float intensity = 2 * light.intensity / (PI);
+					float intensity = 4 * light.intensity / (PI);
 					ColorRGB radiance = light.color * cosTheta * intensity;
 
 					return radiance;
 				}
 			}
 			
-			//float lightDirection = (light.origin - target).Magnitude();
-
-			//assert(true && "No Implemented Yet!");
-			//return { radiance };
+			
 		}
 	}
 

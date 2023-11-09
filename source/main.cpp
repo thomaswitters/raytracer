@@ -33,7 +33,7 @@ int main(int argc, char* args[])
 	const uint32_t height = 480;
 
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"RayTracer - **Insert Name**",
+		"RayTracer - **Thomas Witters(2DAE18)**",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -48,8 +48,9 @@ int main(int argc, char* args[])
 	//const auto pScene = new Scene_W1();
 	//const auto pScene = new Scene_W2();
 	//const auto pScene = new Scene_W3();
-	//const auto pScene = new Scene_W4_TestScene();
+	
 	const auto pScene = new Scene_W4_ReferenceScene();
+	//const auto pScene = new Scene_W4_TestScene();
 	pScene->Initialize();
 
 	//Start loop
@@ -61,6 +62,8 @@ int main(int argc, char* args[])
 	float printTimer = 0.f;
 	bool isLooping = true;
 	bool takeScreenshot = false;
+
+	
 	while (isLooping)
 	{
 		//--------- Get input events ---------
@@ -76,20 +79,27 @@ int main(int argc, char* args[])
 				if(e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
 				break;
+			case SDL_KEYDOWN:
+				switch (e.key.keysym.sym) 
+				{
+				case SDLK_F2:
+					// Toggle shadows when F2 is pressed
+					pRenderer->ToggleShadows();
+					break;
+				case SDLK_F3:
+					// Cycle through lighting modes when F3 is pressed
+					pRenderer->CycleLightingMode();
+					break;
+				case SDLK_F6:
+					// Cycle through lighting modes when F3 is pressed
+					pTimer->StartBenchmark();
+					break;
+				}
 			}
 		}
 
 		//--------- Update ---------
 		pScene->Update(pTimer);
-		const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-		if (pKeyboardState[SDL_SCANCODE_F2])
-		{
-			pRenderer->ToggleShadows();
-		}
-		if (pKeyboardState[SDL_SCANCODE_F3])
-		{
-			pRenderer->CycleLightingMode();
-		}
 
 		//--------- Render ---------
 		pRenderer->Render(pScene);

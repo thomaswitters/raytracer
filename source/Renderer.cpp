@@ -81,10 +81,6 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 
 	auto& lights = pScene->GetLights();
 
-
-	//float tx = ((2.f * (px + offset) / m_Width - 1) * (aspectRatio * fov));
-	//float ty = (1 - (2.f * (py + offset) / m_Height)) * fov;
-
 	Vector3 rayDirection = { cx, cy, 1 };
 	rayDirection.Normalize();
 
@@ -95,41 +91,61 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 	HitRecord closestHit{};
 	pScene->GetClosestHit(viewRay, closestHit);
 
-	//RenderPixel(pScene, 0, fov, aspectRatio, cameraToWorld, camera.origin);
 
 	ColorRGB finalColor{ 0,0,0 };
 	if (closestHit.didHit)
 	{
-		//finalColor = materials[closestHit.materialIndex]->Shade();
 		for (const auto& Light : lights)
 		{
 			Ray lightRay{};
-			//Vector3 lightRayDirection = closestHit.origin - Light.origin;
 			Vector3 lightRayDirection = LightUtils::GetDirectionToLight(Light, closestHit.origin);
-			//lightRay.max = lightRayDirection.Magnitude();
+
 			lightRayDirection.Normalize();
 			lightRay.origin = closestHit.origin;
 			lightRay.direction = lightRayDirection;
 
 			float lambert = Vector3::Dot(closestHit.normal, lightRayDirection);
-			//float lambert = Vector3::Dot(closestHit.normal, lightRayDirection);
+
+			
 
 			if (lambert > 0.0f)
 			{
-				// Calculate the shading for this light
 				ColorRGB lightShading = materials[closestHit.materialIndex]->Shade(closestHit, lightRayDirection, -rayDirection);
 
-				// Accumulate the light contribution to the final color
-				finalColor += LightUtils::GetRadiance(Light, closestHit.origin) * lightShading * lambert;
-				//finalColor += lightShading;
+				if (m_CurrentLightingMode == LightingMode::ObservedArea)
+				{
+					finalColor.r += lambert;
+					finalColor.g += lambert;
+					finalColor.b += lambert;
+				}
+				else if (m_CurrentLightingMode == LightingMode::BRDF)
+				{
+					finalColor += lightShading; 
+				}
+				else if (m_CurrentLightingMode == LightingMode::Combined)
+				{
+					finalColor += LightUtils::GetRadiance(Light, closestHit.origin) * lightShading * lambert;
+				}
+				
 			}
-
-
-			if (pScene->DoesHit(lightRay) && m_ShadowEnabled)
+			if (m_CurrentLightingMode == LightingMode::Radiance)
 			{
-				finalColor *= 0.9f;
+				finalColor += LightUtils::GetRadiance(Light, closestHit.origin);
 			}
+			
+			
 
+
+			if (m_ShadowEnabled)
+			{
+				
+				if (pScene->DoesHit(lightRay))
+				{
+					finalColor *= 0.95f;
+				}
+
+			}
+			
 
 		}
 	}
@@ -142,11 +158,6 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 		static_cast<uint8_t>(finalColor.b * 255));
 }
 
-void Renderer::RenderPixel(Scene* pScene, int px, int py, float fov, float aspectRatio, const Matrix cameraToWorld, const Vector3 cameraOrigin) const
-{
-	RenderPixel(pScene, px * py, fov, aspectRatio, cameraToWorld, cameraOrigin);
-
-}
 
 bool Renderer::SaveBufferToImage() const
 {

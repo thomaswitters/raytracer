@@ -15,15 +15,12 @@ namespace dae
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			//kd = std::max(0.0f, std::min(1.0f, kd));
 
-			// Calculate the Lambertian diffuse reflection color
+			
 			ColorRGB result;
 			result.r = kd * (cd.r / PI);
 			result.g = kd * (cd.r / PI);
 			result.b = kd * (cd.b / PI);
-
-			//return kd * (cd / PI);
 
 			return result;
 
@@ -34,18 +31,13 @@ namespace dae
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			/*ColorRGB clamped_kd(std::max(0.0f, std::min(1.0f, kd.r)),
-				std::max(0.0f, std::min(1.0f, kd.g)),
-				std::max(0.0f, std::min(1.0f, kd.b)));*/
-
-			// Calculate the Lambertian diffuse reflection color
+			
 			ColorRGB result;
-			result.r = /*clamped_*/kd.r * cd.r;
-			result.g = /*clamped_*/kd.g * cd.g;
-			result.b = /*clamped_*/kd.b * cd.b;
+			result.r = kd.r * cd.r;
+			result.g = kd.g * cd.g;
+			result.b = kd.b * cd.b;
 
 			return result;
-			//return {};
 		}
 
 		/**
@@ -59,21 +51,10 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			//exp = std::max(0.0f, exp);
-
-			//Vector3 reflection = Vector3::Reflect(l, n);
-			//float dotRV = Vector3::Dot(reflection, v);
-
 
 			Vector3 reflection = l - (2 * Vector3::Dot(n, l)) * n;
 			float dotRV = Vector3::Dot(reflection, v);
 
-			
-			
-
-			
-			
-			
 			if(dotRV > 0)
 			{
 				float phongSpecularReflection = ks * (std::pow(dotRV, exp));
@@ -94,8 +75,6 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//1. Calculate the Base Reflecticity (F0)
-			//2. Implement BRDF::FresnelFunction_Schlick(Screenshot reflects the output of this function)
 
 			ColorRGB one(1.f, 1.f, 1.f);
 			ColorRGB juist{};
@@ -103,7 +82,6 @@ namespace dae
 			juist.g = one.g - f0.g;
 			juist.b = one.b - f0.b;
 
-			// Calculate the Schlick approximation for the Fresnel reflectivity
 			ColorRGB fresnel = f0 + (juist * std::pow(1.0f - Vector3::Dot(h, v), 5.0f));
 
 			return fresnel;
@@ -152,7 +130,7 @@ namespace dae
 		{
 			float G1 = GeometryFunction_SchlickGGX(n, v, roughness);
 			float G2 = GeometryFunction_SchlickGGX(n, l, roughness);
-			return G1 + G2;
+			return G1 * G2;
 		}
 
 	}

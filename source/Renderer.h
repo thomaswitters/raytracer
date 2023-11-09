@@ -3,6 +3,8 @@
 #include <cstdint>
 #include "Matrix.h"
 
+#include <iostream>
+
 struct SDL_Window;
 struct SDL_Surface;
 
@@ -23,12 +25,31 @@ namespace dae
 
 		void Render(Scene* pScene) const;
 		void RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Matrix cameraToWorld, const Vector3 cameraOrigin) const;
-		void RenderPixel(Scene* pScene, int px, int py, float fov, float aspectRatio, const Matrix cameraToWorld, const Vector3 cameraOrigin) const;
 
 
 		bool SaveBufferToImage() const;
 
-		void CycleLightingMode() {};
+		void CycleLightingMode() {
+			switch (m_CurrentLightingMode)
+			{
+			case LightingMode::ObservedArea:
+				m_CurrentLightingMode = LightingMode::Radiance;
+				std::cout << " \nLIGHTING MODE: " << "RADIANCE" << std::endl;
+				break;
+			case LightingMode::Radiance:
+				m_CurrentLightingMode = LightingMode::BRDF;
+				std::cout << " \nLIGHTING MODE: " << "BRDF" << std::endl;
+				break;
+			case LightingMode::BRDF:
+				m_CurrentLightingMode = LightingMode::Combined;
+				std::cout << " \nLIGHTING MODE: " << "COMBINED" << std::endl;
+				break;
+			case LightingMode::Combined:
+				m_CurrentLightingMode = LightingMode::ObservedArea;
+				std::cout << " \nLIGHTING MODE: " << "OBSERVED AREA" << std::endl;
+				break;
+			}
+		};
 		void ToggleShadows() { m_ShadowEnabled = !m_ShadowEnabled; }
 
 	private:
@@ -48,7 +69,7 @@ namespace dae
 			Combined
 		};
 
-		LightingMode m_CurrentLightingMode{ LightingMode::ObservedArea };
+		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		bool m_ShadowEnabled{true};
 
 	};
